@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Osztálypont gyűjtő</title>
+  <style>
+    :root { --primary:#5b6cff; --primary2:#8b5cf6; --bg:#eef4ff; --card:#fff; --text:#1f2937; --good:#18a558; --danger:#dc4c64; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--text); background:linear-gradient(135deg,#eef4ff,#fff3d9); }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; color:white; background:linear-gradient(90deg,var(--primary),var(--primary2)); box-shadow:0 4px 18px #5b6cff30; }
+    .topbar h1 { margin:0; font-size:clamp(20px,3vw,34px); }
+    .top-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .wrap { max-width:1500px; margin:auto; padding:18px; }
+    .panel { background:var(--card); border-radius:22px; padding:18px; box-shadow:0 10px 30px #1f29371a; }
+    .settings { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
+    label { font-weight:800; display:grid; gap:7px; }
+    select,input { width:100%; border:2px solid #dbe3f3; border-radius:12px; padding:12px; background:white; color:var(--text); }
+    select:focus,input:focus { outline:3px solid #8b5cf633; border-color:var(--primary); }
+    .toolbar { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
+    .toolbar label { flex:1 1 260px; }
+    .btn { border:0; border-radius:12px; padding:11px 14px; font-weight:850; color:white; background:var(--primary); box-shadow:0 4px 10px #5b6cff33; }
+    .btn:hover { filter:brightness(.95); transform:translateY(-1px); }
+    .btn.secondary { background:#64748b; }
+    .btn.good { background:var(--good); }
+    .btn.danger { background:var(--danger); }
+    .btn.small { padding:8px 11px; }
+    .world { position:relative; height:170px; overflow:hidden; margin:16px 0; border-radius:22px; border:4px solid #fff; box-shadow:0 8px 25px #3f5d701c; background:#e8f7ff; }
+    .world.path { background:linear-gradient(#91cdf1 0 45%,#75bd67 46% 100%); }
+    .world.path:after { content:""; position:absolute; width:65%; height:42px; left:18%; bottom:16px; border-radius:50%; background:#e9b96d; transform:rotate(-4deg); box-shadow:inset 0 0 0 5px #d89f51; }
+    .castle { position:absolute; right:7%; bottom:49px; font-size:70px; z-index:2; }
+    .world.tree { background:linear-gradient(#8dd7f5 0 58%,#70b968 59%); }
+    .tree-shape { position:absolute; left:50%; bottom:-80px; transform:translateX(-50%); width:210px; height:210px; border-radius:50%; background:#42a84e; box-shadow:-95px 38px 0 -20px #58b65c,95px 38px 0 -20px #358c43; }
+    .world.berries { background:linear-gradient(#8fd47e 0 62%,#54a844 63%); }
+    .basket { position:absolute; right:8%; bottom:17px; width:130px; height:78px; border-radius:8px 8px 42px 42px; background:repeating-linear-gradient(90deg,#ba7a35 0 9px,#dda65c 9px 16px); border:5px solid #956126; z-index:3; }
+    .basket-fill { position:absolute; left:16px; right:16px; bottom:12px; height:0; border-radius:50%; background:#7c2c3b; transition:.5s height; z-index:4; }
+    .traveler { position:absolute; z-index:5; bottom:35px; left:2%; font-size:48px; transition:left .55s cubic-bezier(.2,.8,.2,1),bottom .55s cubic-bezier(.2,.8,.2,1); filter:drop-shadow(0 5px 3px #0002); }
+    .world.tree .traveler { bottom:30px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+    .student { position:relative; overflow:hidden; min-height:210px; border:3px solid #edf1fa; border-radius:20px; padding:14px; text-align:center; background:linear-gradient(145deg,#fff,#f7faff); box-shadow:0 7px 18px #5b6cff12; }
+    .avatar { font-size:64px; height:74px; line-height:74px; filter:drop-shadow(0 5px 5px #0001); }
+    .student-name { margin:3px 0 7px; font-size:22px; overflow-wrap:anywhere; }
+    .points { display:inline-flex; align-items:center; justify-content:center; min-width:76px; height:76px; border-radius:50%; margin:4px 0 10px; font-size:34px; font-weight:950; color:white; background:linear-gradient(135deg,#ffb629,#ff7e42); box-shadow:0 6px 14px #ff9d4160; }
+    .student-actions { display:flex; justify-content:center; gap:8px; }
+    .plus { width:74px; height:48px; border:0; border-radius:14px; background:var(--good); color:white; font-size:25px; font-weight:900; }
+    .undo { width:48px; height:48px; border:0; border-radius:14px; background:#edf1f7; color:#596579; font-size:21px; }
+    .delete { position:absolute; top:8px; right:8px; border:0; border-radius:50%; width:34px; height:34px; background:#fff0f3; color:var(--danger); }
+    .summary { margin-top:16px; }
+    .summary-row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #edf1fa; }
+    .empty { grid-column:1/-1; text-align:center; padding:45px 15px; color:#64748b; }
+    #confetti,#rewardOverlay { position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden; }
+    .particle { position:absolute; top:-20px; animation:fall 2s linear forwards; }
+    @keyframes fall { to { transform:translate(var(--x),110vh) rotate(900deg); opacity:.1; } }
+    .flash { position:fixed; inset:0; z-index:49; pointer-events:none; animation:flash2 2s ease-out forwards; }
+    @keyframes flash2 { 0%{background:#fff;opacity:.9} 100%{background:transparent;opacity:0} }
+    .petal { position:absolute; top:-30px; font-size:28px; animation:petalFall 2s ease-in forwards; }
+    @keyframes petalFall { to { transform:translate(var(--x),110vh) rotate(360deg); } }
+    .star { position:absolute; animation:starFlash 2s ease-out forwards; }
+    @keyframes starFlash { 0%{transform:scale(.2);opacity:0} 20%{transform:scale(1.4);opacity:1} 100%{transform:scale(.2);opacity:0} }
+    dialog { border:0; border-radius:20px; padding:24px; max-width:430px; width:calc(100% - 30px); box-shadow:0 20px 50px #1115; }
+    dialog::backdrop { background:#1f293764; }
+    .dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+    @media (max-width:800px) { .settings{grid-template-columns:1fr}.topbar{align-items:flex-start}.top-actions{justify-content:flex-end}.world{height:145px}.castle{font-size:55px}.grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}.student{min-height:195px}.avatar{font-size:54px}.points{height:68px;min-width:68px;font-size:30px} }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>⭐ Osztálypont</h1>
+    <div class="top-actions">
+      <button class="btn small secondary" id="summaryBtn">Napi összesítő</button>
+      <button class="btn small" id="newDayBtn">Új nap</button>
+      <button class="btn small secondary" id="exportBtn">Export</button>
+      <button class="btn small secondary" id="importBtn">Import</button>
+      <input id="importFile" type="file" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <div class="settings">
+        <label>Tanulók megjelenése
+          <select id="themeSelect">
+            <option value="pets">Kisállatok</option>
+            <option value="flowers">Virágok</option>
+            <option value="shapes">Színes formák</option>
+          </select>
+        </label>
+        <label>Jutalom-animáció
+          <select id="rewardSelect">
+            <option value="confetti">Konfetti</option>
+            <option value="petals">Virágszirom-eső</option>
+            <option value="stars">Csillagfény</option>
+          </select>
+        </label>
+        <label>Világ
+          <select id="worldSelect">
+            <option value="path">Ösvény a kastély felé</option>
+            <option value="tree">Fára mászás</option>
+            <option value="berries">Erdei bogyógyűjtés</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="toolbar">
+        <label>Új tanuló beceneve
+          <input id="nameInput" maxlength="24" placeholder="Írd be a becenevet">
+        </label>
+        <button class="btn good" id="addBtn">Tanuló hozzáadása</button>
+      </div>
+
+      <div class="world path" id="world" aria-label="Játékvilág">
+        <div class="castle" id="castle">🏰</div>
+        <div class="tree-shape" id="treeShape" hidden></div>
+        <div class="basket" id="basket" hidden><div class="basket-fill" id="basketFill"></div></div>
+        <div class="traveler" id="traveler">🚶</div>
+      </div>
+
+      <div class="grid" id="studentGrid"></div>
+    </section>
+  </main>
+
+  <dialog id="summaryDialog">
+    <h2>Napi összesítő</h2>
+    <div id="summaryContent"></div>
+    <div class="dialog-actions"><button class="btn" id="closeSummary">Bezárás</button></div>
+  </dialog>
+
+  <dialog id="confirmDialog">
+    <h2 id="confirmTitle">Biztosan folytatod?</h2>
+    <p id="confirmText"></p>
+    <div class="dialog-actions">
+      <button class="btn secondary" id="confirmCancel">Mégse</button>
+      <button class="btn danger" id="confirmOk">Folytatás</button>
+    </div>
+  </dialog>
+
+  <div id="confetti"></div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'osztalyPontGyujto-v1';
+      const avatars = {
+        pets:['🐶','🐱','🐰','🦊','🐼','🐻','🐨','🐯','🐸','🐧'],
+        flowers:['🌻','🌷','🌹','🌼','🌸','🪻','🌺','🌱','🌵','🍀'],
+        shapes:['🔵','🟣','🟠','🟡','🟢','🟤','🔺','⭐','💠','🟥']
+      };
+      const state = loadState();
+      const $ = id => document.getElementById(id);
+
+      function today(){ return new Date().toLocaleDateString('sv-SE'); }
+      function defaultState(){ return {students:[], settings:{theme:'pets',reward:'confetti',world:'path'}, currentDay:today(), history:{}}; }
+      function loadState(){
+        try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)); return saved && Array.isArray(saved.students) ? saved : defaultState(); }
+        catch { return defaultState(); }
+      }
+      function save(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+      function ensureDay(){ if(!state.history[state.currentDay]) state.history[state.currentDay]={}; }
+      ensureDay(); save();
+
+      function syncSettings(){
+        $('themeSelect').value=state.settings.theme;
+        $('rewardSelect').value=state.settings.reward;
+        $('worldSelect').value=state.settings.world;
+        renderWorld();
+      }
+      function avatarFor(student,index){
+        const list=avatars[state.settings.theme]||avatars.pets;
+        if(student.avatarIndex==null) student.avatarIndex=index%list.length;
+        return list[student.avatarIndex%list.length];
+      }
+      function totalPoints(student){ ensureDay(); return state.history[state.currentDay][student.id] || 0; }
+
+      function render(){
+        ensureDay();
+        const grid=$('studentGrid'); grid.innerHTML='';
+        if(!state.students.length){
+          grid.innerHTML='<div class="empty"><strong>Még nincs tanuló.</strong><br>Írd be egy becenevet, majd add hozzá!</div>';
+        } else {
+          state.students.forEach((student,index)=>{
+            const card=document.createElement('article'); card.className='student';
+            card.innerHTML=`<button class="delete" title="Tanuló eltávolítása" aria-label="Tanuló eltávolítása">✕</button>
+              <div class="avatar">${avatarFor(student,index)}</div>
+              <h3 class="student-name">${escapeHtml(student.name)}</h3>
+              <div class="points">${totalPoints(student)}</div>
+              <div class="student-actions">
+                <button class="undo" title="Utolsó pont visszavonása" aria-label="Utolsó pont visszavonása">↶</button>
+                <button class="plus" title="1 pont adása" aria-label="1 pont adása">+1</button>
+              </div>`;
+            card.querySelector('.plus').addEventListener('click',()=>addPoint(student.id));
+            card.querySelector('.undo').addEventListener('click',()=>undoPoint(student.id));
+            card.querySelector('.delete').addEventListener('click',()=>confirmRemove(student));
+            grid.appendChild(card);
+          });
+        }
+        syncSettings(); save();
+      }
+
+      function escapeHtml(text){ const d=document.createElement('div'); d.textContent=text; return d.innerHTML; }
+
+      function addPoint(id){
+        ensureDay(); const map=state.history[state.currentDay]; map[id]=(map[id]||0)+1;
+        save(); render(); reward(state.settings.reward); updateTraveler();
+      }
+      function undoPoint(id){
+        ensureDay(); const map=state.history[state.currentDay]; if(map[id]>0){ map[id]--; save(); render(); updateTraveler(); }
+      }
+
+      function confirmRemove(student){
+        openConfirm('Tanuló eltávolítása',`Eltávolítod „${student.name}” tanulót? A napi pontjai is törlődnek.`,()=>{
+          state.students=state.students.filter(s=>s.id!==student.id);
+          Object.values(state.history).forEach(day=>delete day[student.id]); save(); render();
+        });
+      }
+
+      function openConfirm(title,text,onOk){
+        $('confirmTitle').textContent=title; $('confirmText').textContent=text;
+        const ok=$('confirmOk'); const cancel=$('confirmCancel');
+        const close=()=>{ ok.removeEventListener('click',handler); $('confirmDialog').close(); };
+        const handler=()=>{ close(); onOk(); };
+        ok.addEventListener('click',handler); cancel.onclick=()=>close();
+        $('confirmDialog').showModal();
+      }
+
+      function reward(type){
+        if(type==='confetti') confetti();
+        if(type==='petals') petals();
+        if(type==='stars') stars();
+      }
+      function confetti(){
+        const box=$('confetti'); box.innerHTML='';
+        const colors=['#ff3b30','#ffcc00','#34c759','#5ac8fa','#af52de','#ff2d55'];
+        for(let i=0;i<180;i++){
+          const p=document.createElement('i'); p.className='particle';
+          p.style.left=Math.random()*100+'%'; p.style.width=(6+Math.random()*10)+'px'; p.style.height=(8+Math.random()*14)+'px';
+          p.style.background=colors[i%colors.length]; p.style.borderRadius=Math.random()>.5?'50%':'2px';
+          p.style.setProperty('--x',(Math.random()*220-110)+'px'); p.style.animationDelay=(Math.random()*0.25)+'s';
+          box.appendChild(p);
+        }
+        setTimeout(()=>box.innerHTML='',2000);
+      }
+      function petals(){
+        const box=$('confetti'); box.innerHTML='';
+        for(let i=0;i<65;i++){ const p=document.createElement('b'); p.className='petal'; p.textContent=['🌸','🌼','🌷'][i%3]; p.style.left=Math.random()*100+'%'; p.style.setProperty('--x',(Math.random()*200-100)+'px'); p.style.animationDelay=(Math.random()*.4)+'s'; box.appendChild(p); }
+        setTimeout(()=>box.innerHTML='',2000);
+      }
+      function stars(){
+        const box=$('confetti'); box.innerHTML='';
+        const flash=document.createElement('div'); flash.className='flash'; box.appendChild(flash);
+        for(let i=0;i<50;i++){ const s=document.createElement('b'); s.className='star'; s.textContent='⭐'; s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%'; s.style.fontSize=(18+Math.random()*36)+'px'; s.style.animationDelay=(Math.random()*.5)+'s'; box.appendChild(s); }
+        setTimeout(()=>box.innerHTML='',2000);
+      }
+
+      function renderWorld(){
+        const world=$('world'); world.className='world '+state.settings.world;
+        $('castle').hidden=state.settings.world!=='path';
+        $('treeShape').hidden=state.settings.world!=='tree';
+        $('basket').hidden=state.settings.world!=='berries';
+        updateTraveler();
+      }
+      function updateTraveler(){
+        const values=Object.values(state.history[state.currentDay]||{}); const total=values.reduce((a,b)=>a+(Number(b)||0),0);
+        const progress=Math.min(92,total*2);
+        const traveler=$('traveler');
+        if(state.settings.world==='path') traveler.style.cssText=`left:${progress}%;bottom:35px`;
+        if(state.settings.world==='tree') traveler.style.cssText=`left:${44+Math.min(progress*.12,10)}%;bottom:${30+Math.min(progress*1.05,100)}px`;
+        if(state.settings.world==='berries') traveler.style.cssText=`left:${Math.min(progress,75)}%;bottom:34px`;
+        $('basketFill').style.height=Math.min(progress*.58,48)+'px';
+      }
+
+      $('addBtn').addEventListener('click',()=>{
+        const input=$('nameInput'); const name=input.value.trim();
+        if(!name){ input.focus(); return; }
+        if(state.students.some(s=>s.name.toLocaleLowerCase('hu')===name.toLocaleLowerCase('hu'))){ alert('Ez a becenév már szerepel a listán.'); input.select(); return; }
+        state.students.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),name,avatarIndex:state.students.length});
+        input.value=''; save(); render(); input.focus();
+      });
+      $('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') $('addBtn').click(); });
+
+      ['theme','reward','world'].forEach(key=>{
+        const select=$(key+'Select'); select.addEventListener('change',()=>{ state.settings[key]=select.value; save(); render(); });
+      });
+
+      $('summaryBtn').addEventListener('click',()=>{
+        ensureDay(); const map=state.history[state.currentDay]||{};
+        let html=`<p><strong>Dátum:</strong> ${state.currentDay}</p>`;
+        let sum=0;
+        state.students.forEach(s=>{ const n=map[s.id]||0; sum+=n; html+=`<div class="summary-row"><span>${escapeHtml(s.name)}</span><strong>${n} pont</strong></div>`; });
+        html+=`<div class="summary-row"><span><strong>Összesen</strong></span><strong>${sum} pont</strong></div>`;
+        $('summaryContent').innerHTML=html; $('summaryDialog').showModal();
+      });
+      $('closeSummary').addEventListener('click',()=>$('summaryDialog').close());
+
+      $('newDayBtn').addEventListener('click',()=>{
+        openConfirm('Új nap indítása','A mai pontok összesítőként megmaradnak, és minden tanuló pontja 0-ra indul. Folytatod?',()=>{
+          state.currentDay=today(); ensureDay(); save(); render();
+        });
+      });
+
+      $('exportBtn').addEventListener('click',()=>{
+        const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob); const a=document.createElement('a');
+        a.href=url; a.download=`osztaly-pont-${today()}.json`; a.click(); URL.revokeObjectURL(url);
+      });
+      $('importBtn').addEventListener('click',()=>$('importFile').click());
+      $('importFile').addEventListener('change',async e=>{
+        const file=e.target.files[0]; if(!file) return;
+        try{
+          const imported=JSON.parse(await file.text());
+          if(!Array.isArray(imported.students)||typeof imported.history!=='object'||!imported.settings) throw new Error('Érvénytelen adatformátum');
+          openConfirm('Adatok importálása','A jelenlegi adatok felülíródnak a JSON-fájlból. Folytatod?',()=>{
+            const fresh=defaultState(); Object.assign(fresh,imported); fresh.settings={...fresh.settings}; state.students=fresh.students; state.settings=fresh.settings; state.currentDay=fresh.currentDay||today(); state.history=fresh.history||{}; ensureDay(); save(); render();
+          });
+        } catch(err){ alert('Nem sikerült importálni: a fájl nem megfelelő JSON-adatot tartalmaz.'); }
+        e.target.value='';
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
